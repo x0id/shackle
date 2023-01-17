@@ -130,7 +130,8 @@ options_rec(Client, Options) ->
         client = Client,
         max_retries = MaxRetries,
         pool_size = PoolSize,
-        pool_strategy = PoolStrategy
+        pool_strategy = PoolStrategy,
+        test_leak = ?LOOKUP(test_leak, Options, false)
     }.
 
 server(_Name, #pool_options {
@@ -152,6 +153,7 @@ server(Name, #pool_options {
             {ok, Backlog} = shackle_pool_foil:lookup({Name, backlog}),
             case shackle_backlog:check(Backlog, ServerId, BacklogSize) of
                 true ->
+                    maybe_nap(Options),
                     {ok, ServerName} = shackle_pool_foil:lookup(ServerId),
                     {ok, Client, ServerName};
                 false ->
@@ -162,6 +164,11 @@ server(Name, #pool_options {
             ?METRICS(Client, counter, <<"disabled">>),
             server(Name, Options, N - 1)
     end.
+
+maybe_nap(#pool_options{test_leak = true}) ->
+    timer:sleep(1);
+maybe_nap(_) ->
+    ok.
 
 server_id(Name, PoolSize, random) ->
     {Name, shackle_utils:random(PoolSize)};

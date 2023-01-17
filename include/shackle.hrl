@@ -12,7 +12,8 @@
     client        :: client(),
     max_retries   :: max_retries(),
     pool_size     :: pool_size(),
-    pool_strategy :: pool_strategy()
+    pool_strategy :: pool_strategy(),
+    test_leak     :: boolean()
 }).
 
 -record(reconnect_state, {
