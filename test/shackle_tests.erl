@@ -2,7 +2,7 @@
 -include_lib("eunit/include/eunit.hrl").
 -include("test.hrl").
 
--define(N, 1000).
+-define(ITERATIONS, 1000).
 
 %% runners
 shackle_app_stop_start_test_() ->
@@ -179,7 +179,7 @@ shackle_timeout_udp_test_() ->
 
 %% tests
 add_subtest(Client) ->
-    [assert_random_add(Client) || _ <- lists:seq(1, ?N)].
+    [assert_random_add(Client) || _ <- lists:seq(1, ?ITERATIONS)].
 
 app_stop_start_subtest() ->
     ?assertEqual({error, no_server}, arithmetic_tcp_client:add(1, 1)),
@@ -212,7 +212,7 @@ call_crash_subtest() ->
     ?assertEqual(2, arithmetic_tcp_client:add(1, 1)).
 
 multiply_subtest(Client) ->
-    [assert_random_multiply(Client) || _ <- lists:seq(1, ?N)].
+    [assert_random_multiply(Client) || _ <- lists:seq(1, ?ITERATIONS)].
 
 noop_subtest(Client) ->
     [Client:noop() || _ <- lists:seq(1, 10)].

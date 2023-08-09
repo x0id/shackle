@@ -63,15 +63,12 @@ cleanup(_) ->
 race_loop(SpinCount, IterationsLeft, Fun) ->
     race_loop(SpinCount, Fun(SpinCount), IterationsLeft, Fun).
 
-race_loop(SpinCount, Result, IterationsLeft, Fun) ->
+race_loop(SpinCount, Result, IterationsLeft, Fun) when IterationsLeft > 0 ->
     % io:format(user, "~p ~p ~p~n", [IterationsLeft, SpinCount, Result]),
-    if
-        IterationsLeft > 0 ->
-            N_ = adjust_spin(Result, SpinCount),
-            race_loop(N_, Fun(N_), IterationsLeft - 1, Fun);
-        true ->
-            ok
-    end.
+    N_ = adjust_spin(Result, SpinCount),
+    race_loop(N_, Fun(N_), IterationsLeft - 1, Fun);
+race_loop(_, _, _, _) ->
+    ok.
 
 adjust_spin(true, SpinCount) -> SpinCount - 1;
 adjust_spin(false, SpinCount) -> SpinCount + 1.

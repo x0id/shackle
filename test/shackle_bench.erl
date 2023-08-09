@@ -5,7 +5,7 @@
     run/0
 ]).
 
--define(N, 10240).
+-define(ITERATIONS, 10240).
 -define(CLIENT, arithmetic_tcp_client).
 -define(CONCURENCIES, [32, 64, 128, 512, 2048]).
 -define(POOL_SIZES, [16, 32, 64, 128, 256]).
@@ -20,7 +20,7 @@ run() ->
     io:format("Running benchmark...~n~n" ++
         "PoolSize  Concurency  Requests/s  Error %~n" ++
         [$= || _ <- lists:seq(1, 49)] ++ "~n", []),
-    run_pool_size(?POOL_SIZES, ?CONCURENCIES, ?N).
+    run_pool_size(?POOL_SIZES, ?CONCURENCIES, ?ITERATIONS).
 
 %% private
 lookup(Key, List) ->

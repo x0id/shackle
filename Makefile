@@ -1,5 +1,4 @@
 CACHEGRIND=qcachegrind
-ELVIS=./bin/elvis
 REBAR3=$(shell which rebar3)
 ifeq ($(REBAR3),)
 REBAR3=./bin/rebar3
@@ -30,7 +29,7 @@ edoc:
 
 elvis:
 	@echo "Running elvis rock..."
-	@$(ELVIS) rock
+	@$(REBAR3) lint
 
 eunit:
 	@echo "Running rebar3 eunit..."

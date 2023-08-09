@@ -6,8 +6,8 @@
 ]).
 
 -define(CLIENT, arithmetic_tcp_client).
--define(N, 1000).
--define(P, 20).
+-define(ITERATIONS, 1000).
+-define(NPROC, 20).
 
 %% public
 -spec run() -> ok.
@@ -26,9 +26,9 @@ run() ->
 
     Self = self(),
     [spawn(fun () ->
-        [20 = ?CLIENT:add(10, 10) || _ <- lists:seq(1, ?N)],
+        [20 = ?CLIENT:add(10, 10) || _ <- lists:seq(1, ?ITERATIONS)],
         Self ! exit
-    end) || _ <- lists:seq(1, ?P)],
+    end) || _ <- lists:seq(1, ?NPROC)],
     wait(),
 
     fprofx:trace(stop),
@@ -42,7 +42,7 @@ run() ->
 
 %% private
 wait() ->
-    wait(?P).
+    wait(?NPROC).
 
 wait(0) ->
     ok;
