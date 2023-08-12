@@ -14,8 +14,7 @@
 ]).
 
 %% public
--spec ets_options() ->
-  ets:options().
+-spec ets_options() -> list().
 
 -ifdef(DECENTRALIZED_COUNTERS).
 

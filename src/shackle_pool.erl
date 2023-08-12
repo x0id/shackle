@@ -5,6 +5,10 @@
     {shackle_pool_foil, lookup, 1}
 ]).
 
+-ifdef(DLZR_NO_UNKNOWN).
+-dialyzer([{nowarn_function, [options/1, server/3]}, no_unknown]).
+-endif.
+
 %% public
 -export([
     start/3,

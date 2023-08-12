@@ -5,6 +5,10 @@
     {shackle_hooks_foil, lookup, 1}
 ]).
 
+-ifdef(DLZR_NO_UNKNOWN).
+-dialyzer([{nowarn_function, [metrics/4]}, no_unknown]).
+-endif.
+
 -compile(inline).
 -compile({inline_size, 512}).
 
