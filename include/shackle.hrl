@@ -2,6 +2,7 @@
 -record(cast, {
     client         :: client(),
     pid            :: undefined | pid(),
+    release_fun    :: undefined | release_fun(),
     request_id     :: request_id(),
     timeout        :: timeout(),
     timestamp      :: erlang:timestamp()
@@ -58,6 +59,7 @@
 -type pool_strategy() :: random | round_robin.
 -type protocol() :: shackle_ssl | shackle_tcp | shackle_udp.
 -type reconnect_state() :: #reconnect_state {}.
+-type release_fun() :: fun(() -> sema_nif:vacate_ret()).
 -type request_id() :: {server_name(), reference()}.
 -type response() :: {external_request_id(), term()}.
 -type server_index() :: pos_integer().
@@ -74,5 +76,6 @@
     client_options/0,
     init_options/0,
     pool_options/0,
+    release_fun/0,
     request_id/0
 ]).

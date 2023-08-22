@@ -2,8 +2,24 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-define(SEMA_BACKLOG, 1).
+
 simple_test_() ->
     {setup, fun setup/0, fun cleanup/1, [{timeout, 300, fun test_leak/0}]}.
+
+-ifdef(SEMA_BACKLOG).
+
+test_leak() ->
+    Sema = element(1, persistent_term:get({sema, arithmetic})),
+    race_loop(
+        4_000,
+        200,
+        test_backlog_leak_fun(fun () ->
+            maps:get(cnt, sema_nif:info(Sema))
+        end)
+    ).
+
+-else.
 
 test_leak() ->
     ServerId = {arithmetic, 1},
@@ -13,11 +29,13 @@ test_leak() ->
         race_loop(
             4_000,
             1_000_000,
-            test_backlog_leak_fun(fun() ->
-                element(2, hd(ets:lookup(Backlog, ServerId)))
+            test_backlog_leak_fun(fun () ->
+                element(2, hd(ets:lookup(Backlog, ServerId))) end
             end)
         )
     ).
+
+-endif.
 
 test_backlog_leak_fun(GetBacklogLengthF) ->
     fun(N) ->

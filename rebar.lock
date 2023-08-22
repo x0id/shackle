@@ -4,7 +4,11 @@
   {git,"https://github.com/lpgauth/granderl.git",
        {ref,"43c807e3f3fb62821707c6942c32d684982c3233"}},
   0},
- {<<"metal">>,{pkg,<<"metal">>,<<"0.1.1">>},0}]}.
+ {<<"metal">>,{pkg,<<"metal">>,<<"0.1.1">>},0},
+ {<<"sema_nif">>,
+  {git,"https://github.com/x0id/erlsem.git",
+       {ref,"a6f37ea36db7a3852a27d5081db6809752f96aae"}},
+  0}]}.
 [
 {pkg_hash,[
  {<<"foil">>, <<"415835CA94A8D0A55AB3D334FE2D1A1DCF36E7A0F69789050765770B6BF5E6E9">>},

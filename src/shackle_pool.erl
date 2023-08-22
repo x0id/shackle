@@ -76,7 +76,7 @@ init() ->
     foil:load(?MODULE).
 
 -spec server(pool_name()) ->
-    {ok, client(), atom()} |
+    {ok, client(), atom(), release_fun()} |
     {error, pool_not_started | no_server | shackle_not_started}.
 
 server(Name) ->
@@ -95,7 +95,7 @@ terminate() ->
 
 %% private
 cleanup(Name, OptionsRec) ->
-    shackle_backlog:delete(Name),
+    shackle_sema:delete(Name),
     shackle_queue:delete(Name),
     shackle_status:delete(Name),
     cleanup_ets(Name, OptionsRec),
@@ -109,7 +109,6 @@ cleanup_ets(_Name, _OptionsRec) ->
 cleanup_foil(Name, #pool_options {pool_size = PoolSize}) ->
     foil:delete(?MODULE, Name),
     [foil:delete(?MODULE, {Name, N}) || N <- lists:seq(1, PoolSize)],
-    foil:delete(?MODULE, {Name, backlog}),
     foil:load(?MODULE).
 
 options(Name) ->
@@ -153,14 +152,16 @@ server(Name, #pool_options {
 
     ServerId = server_id(Name, PoolSize, PoolStrategy),
     case shackle_status:active(ServerId) of
+        true when BacklogSize =:= infinity ->
+            {ok, ServerName} = shackle_pool_foil:lookup(ServerId),
+            {ok, Client, ServerName, undefined};
         true ->
-            {ok, Backlog} = shackle_pool_foil:lookup({Name, backlog}),
-            case shackle_backlog:check(Backlog, ServerId, BacklogSize) of
-                true ->
+            case shackle_sema:acquire(Name, ServerId) of
+                {ok, ReleaseFun} ->
                     maybe_nap(Options),
                     {ok, ServerName} = shackle_pool_foil:lookup(ServerId),
-                    {ok, Client, ServerName};
-                false ->
+                    {ok, Client, ServerName, ReleaseFun};
+                error ->
                     ?METRICS(Client, counter, <<"backlog_full">>),
                     server(Name, Options, N - 1)
             end;
@@ -182,8 +183,12 @@ server_id(Name, PoolSize, round_robin) ->
     [ServerId] = ets:update_counter(?ETS_TABLE_POOL_INDEX, Key, UpdateOps),
     {Name, ServerId}.
 
-setup(Name, #pool_options {pool_size = PoolSize} = OptionsRec) ->
-    shackle_backlog:new(Name),
+setup(Name, #pool_options {
+        backlog_size = BacklogSize,
+        pool_size = PoolSize
+    } = OptionsRec) ->
+
+    shackle_sema:new(Name, PoolSize, BacklogSize),
     shackle_queue:new(Name),
     shackle_status:new(Name, PoolSize),
     setup_ets(Name, OptionsRec),
@@ -198,7 +203,6 @@ setup_foil(Name, #pool_options {pool_size = PoolSize} = OptionsRec) ->
     foil:insert(?MODULE, Name, OptionsRec),
     [foil:insert(?MODULE, {Name, N}, server_name(Name, N)) ||
         N <- lists:seq(1, PoolSize)],
-    foil:insert(?MODULE, {Name, backlog}, shackle_backlog:table_name(Name)),
     foil:load(?MODULE).
 
 server_name(Name, Index) ->

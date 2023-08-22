@@ -17,7 +17,6 @@
 
 -record(state, {
     address          :: inet_address(),
-    backlog          :: table(),
     client           :: client(),
     id               :: server_id(),
     init_options     :: init_options(),
@@ -51,7 +50,6 @@ init(Name, Parent, Opts) ->
     {PoolName, Index, Client, ClientOptions} = Opts,
     self() ! ?MSG_CONNECT,
     Id = {PoolName, Index},
-    ok = shackle_backlog:new(PoolName, Id),
 
     InitOptions = ?LOOKUP(init_options, ClientOptions, ?DEFAULT_INIT_OPTS),
     Address = address(ClientOptions),
@@ -63,7 +61,6 @@ init(Name, Parent, Opts) ->
 
     {ok, {#state {
         address = Address,
-        backlog = shackle_backlog:table_name(PoolName),
         client = Client,
         id = Id,
         init_options = InitOptions,
@@ -220,7 +217,6 @@ handle_msg(Msg, {#state {
 
 terminate(_Reason, {#state {
         client = Client,
-        id = Id,
         pool_name = PoolName,
         timer_ref = TimerRef
     } = State, ClientState}) ->
@@ -232,8 +228,7 @@ terminate(_Reason, {#state {
             ?WARN(PoolName, "terminate crash: ~p:~p~n~p~n",
                 [E, R, ?GET_STACK(Stacktrace)])
     end,
-    reply_all({error, shutdown}, State),
-    shackle_backlog:delete(PoolName, Id).
+    reply_all({error, shutdown}, State).
 
 %% private
 address(ClientOptions) ->
@@ -438,20 +433,17 @@ reconnect_timer(#state {
         timer_ref = TimerRef
     }, ClientState}}.
 
-reply(_Reply, #cast {pid = undefined}, #state {
-        backlog = Backlog,
-        id = Id
-    }) ->
-
-    shackle_backlog:decrement(Backlog, Id),
+reply(_Reply, #cast {pid = undefined} = Cast, #state {}) ->
+    release(Cast),
     ok;
-reply(Reply, #cast {pid = Pid} = Cast, #state {
-        backlog = Backlog,
-        id = Id
-    }) ->
-
-    shackle_backlog:decrement(Backlog, Id),
+reply(Reply, #cast {pid = Pid} = Cast, #state {}) ->
+    release(Cast),
     Pid ! {Cast, Reply},
+    ok.
+
+release(#cast {release_fun = ReleaseFun}) when is_function(ReleaseFun, 0) ->
+    ReleaseFun();
+release(_) ->
     ok.
 
 reply_all(Reply, #state {
